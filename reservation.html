@@ -242,7 +242,8 @@
     <div id="footer-placeholder"></div>
     <script src="components.js"></script>
     <script>
-        const API = 'http://localhost:3000/api';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwG8XqULIegUgVDGctrA97S-lbmSyEWKX67Y5ANK5uLf01Z0v6z1XjXGphB-C12v6r82w/exec';
+
         let selectedTime = null;
 
         // Set min date to today
@@ -262,7 +263,7 @@
             container.innerHTML = '<p class="slots-loading">Checking availability…</p>';
 
             try {
-                const res = await fetch(`${API}/availability?date=${date}`);
+                const res = await fetch(`${SCRIPT_URL}?action=availability&date=${date}`);
                 const data = await res.json();
 
                 if (!data.availability || data.availability.length === 0) {
@@ -270,7 +271,6 @@
                     return;
                 }
 
-                // Build the slot grid
                 const grid = document.createElement('div');
                 grid.className = 'slot-grid';
 
@@ -280,10 +280,7 @@
                     btn.className = 'slot-btn';
                     btn.disabled = !slot.available;
                     btn.innerHTML = `${slot.time}<span class="slot-status">${slot.available ? `${slot.remaining} left` : 'fully booked'}</span>`;
-
-                    if (slot.available) {
-                        btn.onclick = () => selectSlot(slot.time, btn);
-                    }
+                    if (slot.available) btn.onclick = () => selectSlot(slot.time, btn);
                     grid.appendChild(btn);
                 });
 
@@ -291,7 +288,7 @@
                 container.appendChild(grid);
 
             } catch (err) {
-                container.innerHTML = '<p class="slots-loading" style="color:#c0392b">Could not load slots. Is the server running?</p>';
+                container.innerHTML = '<p class="slots-loading" style="color:#c0392b">Could not load slots. Please try again.</p>';
             }
         }
 
@@ -301,7 +298,7 @@
             btn.classList.add('selected');
             selectedTime = time;
             document.getElementById('selectedTime').value = time;
-            showError(''); // clear any error
+            showError('');
         }
 
         // Show or hide error message
@@ -325,14 +322,12 @@
             const occasion = document.getElementById('occasion').value;
             const requests = document.getElementById('requests').value.trim();
 
-            // Client-side validation
             if (!firstName || !lastName) return showError('Please enter your full name.');
             if (!email) return showError('Please enter your email address.');
             if (!phone) return showError('Please enter your phone number.');
             if (!date) return showError('Please pick a date.');
             if (!time) return showError('Please select a time slot.');
 
-            // Show loading state
             const btn = document.getElementById('submitBtn');
             const note = document.getElementById('submittingNote');
             btn.disabled = true;
@@ -340,40 +335,44 @@
             note.style.display = 'block';
 
             try {
-                const res = await fetch(`${API}/reservations`, {
+                const res = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ first_name: firstName, last_name: lastName, email, phone, date, time, guests, occasion, requests }),
+                    // Google Apps Script requires text/plain for POST (not application/json)
+                    // because of CORS restrictions — we stringify manually
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'reserve',
+                        first_name: firstName, last_name: lastName,
+                        email, phone, date, time, guests, occasion, requests
+                    }),
                 });
 
                 const data = await res.json();
 
-                if (!res.ok) {
-                    // Server said no — slot taken, validation error etc.
-                    showError(data.error || 'Something went wrong. Please try again.');
+                if (data.error) {
+                    showError(data.error);
                     btn.disabled = false;
                     btn.textContent = 'Request reservation';
                     note.style.display = 'none';
-                    // Reload slots so the taken slot shows as fully booked
-                    loadSlots();
+                    loadSlots(); // refresh slots in case it just got taken
                     return;
                 }
 
                 // Success
                 document.getElementById('resForm').style.display = 'none';
                 document.getElementById('successMsg').textContent =
-                    `${data.message} A confirmation has been sent to ${email}.`;
+                    `${data.message} We look forward to seeing you!`;
                 document.getElementById('resSuccess').style.display = 'block';
 
             } catch (err) {
-                showError('Could not reach the server. Make sure it is running.');
+                showError('Something went wrong. Please try again or call us directly.');
                 btn.disabled = false;
                 btn.textContent = 'Request reservation';
                 note.style.display = 'none';
             }
         }
 
-        // Reset form back to blank state
+        // Reset form
         function resetRes() {
             document.getElementById('resForm').style.display = 'block';
             document.getElementById('resSuccess').style.display = 'none';
