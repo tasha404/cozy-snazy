@@ -6,6 +6,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reserve a Table — Cozy Coffee</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* slot grid */
+        .slot-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .slot-btn {
+            padding: 10px 6px;
+            border: 1px solid var(--border);
+            background: var(--cream-warm);
+            color: var(--ink);
+            font-family: 'Satoshi', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.18s;
+            text-align: center;
+            border-radius: 0;
+            min-height: 44px;
+        }
+
+        .slot-btn:hover:not(:disabled) {
+            background: var(--pine-dark);
+            color: #fff;
+            border-color: var(--pine-dark);
+        }
+
+        .slot-btn.selected {
+            background: var(--pine-dark);
+            color: #fff;
+            border-color: var(--pine-dark);
+            font-weight: 700;
+        }
+
+        .slot-btn:disabled {
+            background: var(--cream-tan);
+            color: #bbb;
+            cursor: not-allowed;
+            text-decoration: line-through;
+            border-color: var(--border);
+        }
+
+        .slot-btn .slot-status {
+            display: block;
+            font-size: 0.62rem;
+            opacity: 0.7;
+            margin-top: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        .slots-loading {
+            font-size: 0.82rem;
+            color: var(--light);
+            font-style: italic;
+            padding: 12px 0;
+        }
+
+        .form-error {
+            background: #fff0f0;
+            border: 1px solid #e5b4b4;
+            color: #8b2c2c;
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .form-error.show {
+            display: block;
+        }
+
+        .submitting-note {
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--light);
+            margin-top: 10px;
+            font-style: italic;
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
@@ -22,83 +105,108 @@
         <div class="res-inner">
             <div class="res-form-wrap">
                 <h2>Make a reservation</h2>
-                <p class="res-form-sub">Fill in your details and we'll confirm by email within the hour.</p>
+                <p class="res-form-sub">Pick a date to see available time slots, then fill in your details.</p>
+
                 <div id="resForm">
-                    <div class="form-row two-col">
-                        <div class="form-field"><label>First name</label><input type="text" placeholder="e.g. Maria" />
-                        </div>
-                        <div class="form-field"><label>Last name</label><input type="text" placeholder="e.g. Santos" />
-                        </div>
-                    </div>
-                    <div class="form-row two-col">
-                        <div class="form-field"><label>Email address</label><input type="email"
-                                placeholder="your@email.com" /></div>
-                        <div class="form-field"><label>Phone number</label><input type="tel"
-                                placeholder="0123456789" /></div>
-                    </div>
-                    <div class="form-row two-col">
-                        <div class="form-field"><label>Date</label><input type="date" id="resDate" /></div>
-                        <div class="form-field">
-                            <label>Time</label>
-                            <select>
-                                <option value="">Select a time</option>
-                                <option>11:30 AM</option>
-                                <option>12:00 PM</option>
-                                <option>12:30 PM</option>
-                                <option>1:00 PM</option>
-                                <option>1:30 PM</option>
-                                <option>2:00 PM</option>
-                                <option>5:00 PM</option>
-                                <option>5:30 PM</option>
-                                <option>6:00 PM</option>
-                                <option>6:30 PM</option>
-                                <option>7:00 PM</option>
-                                <option>7:30 PM</option>
-                            </select>
-                        </div>
-                    </div>
+                    <!-- Error message -->
+                    <div class="form-error" id="formError"></div>
+
+                    <!-- Name -->
                     <div class="form-row two-col">
                         <div class="form-field">
-                            <label>Number of guests</label>
-                            <select>
-                                <option>1 guest</option>
-                                <option>2 guests</option>
-                                <option selected>3 guests</option>
-                                <option>4 guests</option>
-                                <option>5 guests</option>
-                                <option>6 guests</option>
-                                <option>7+ guests — call us</option>
+                            <label>First name *</label>
+                            <input type="text" id="firstName" placeholder="e.g. Maria" />
+                        </div>
+                        <div class="form-field">
+                            <label>Last name *</label>
+                            <input type="text" id="lastName" placeholder="e.g. Santos" />
+                        </div>
+                    </div>
+
+                    <!-- Contact -->
+                    <div class="form-row two-col">
+                        <div class="form-field">
+                            <label>Email address *</label>
+                            <input type="email" id="emailAddr" placeholder="your@email.com" />
+                        </div>
+                        <div class="form-field">
+                            <label>Phone number *</label>
+                            <input type="tel" id="phoneNum" placeholder="+60 12 000 0000" />
+                        </div>
+                    </div>
+
+                    <!-- Date — pick this first to load slots -->
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Date *</label>
+                            <input type="date" id="resDate" onchange="loadSlots()" />
+                        </div>
+                    </div>
+
+                    <!-- Time slots — loaded dynamically -->
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label>Time *</label>
+                            <div id="slotContainer">
+                                <p class="slots-loading">Pick a date above to see available times.</p>
+                            </div>
+                            <input type="hidden" id="selectedTime" />
+                        </div>
+                    </div>
+
+                    <!-- Guests & occasion -->
+                    <div class="form-row two-col">
+                        <div class="form-field">
+                            <label>Number of guests *</label>
+                            <select id="guestCount">
+                                <option value="1">1 guest</option>
+                                <option value="2">2 guests</option>
+                                <option value="3" selected>3 guests</option>
+                                <option value="4">4 guests</option>
+                                <option value="5">5 guests</option>
+                                <option value="6">6 guests</option>
+                                <option value="7">7+ guests — call us</option>
                             </select>
                         </div>
                         <div class="form-field">
                             <label>Occasion (optional)</label>
-                            <select>
+                            <select id="occasion">
                                 <option value="">None / just dining</option>
-                                <option>Birthday</option>
-                                <option>Anniversary</option>
-                                <option>Business lunch</option>
-                                <option>Other</option>
+                                <option value="Birthday">Birthday</option>
+                                <option value="Anniversary">Anniversary</option>
+                                <option value="Business lunch">Business lunch</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
                     </div>
+
+                    <!-- Special requests -->
                     <div class="form-row">
                         <div class="form-field">
                             <label>Special requests (optional)</label>
-                            <textarea placeholder="Dietary needs, high chair, accessibility, anything we should know…"
+                            <textarea id="requests"
+                                placeholder="Dietary needs, high chair, accessibility, anything we should know…"
                                 rows="4"></textarea>
                         </div>
                     </div>
-                    <button class="btn-solid full-width" onclick="submitRes()">Request reservation</button>
-                    <p class="form-note">We'll confirm by email. For same-day bookings please call us directly.</p>
+
+                    <button class="btn-solid full-width" onclick="submitRes()" id="submitBtn">Request
+                        reservation</button>
+                    <p class="submitting-note" id="submittingNote">Checking availability and saving your booking…</p>
+                    <p class="form-note">* Required fields. We'll confirm by email. For same-day bookings please call
+                        us.</p>
                 </div>
+
+                <!-- Success state -->
                 <div class="res-success" id="resSuccess" style="display:none">
                     <div class="res-success-icon">✓</div>
-                    <h3>Reservation requested!</h3>
-                    <p>We'll confirm your table by email within the hour. We look forward to seeing you.</p>
+                    <h3>You're booked in!</h3>
+                    <p id="successMsg">Your table is confirmed. We'll send a confirmation to your email shortly.</p>
                     <button class="btn-outline" onclick="resetRes()">Make another reservation</button>
                 </div>
             </div>
 
+            <!-- Sidebar -->
             <div class="res-info">
                 <div class="res-info-block">
                     <h4>Opening hours</h4>
@@ -110,13 +218,13 @@
                 </div>
                 <div class="res-info-block">
                     <h4>Find us</h4>
-                    <p>klang</p>
-                    <p class="res-map-link">Get directions →</p>
+                    <p>780 Memorial Drive SE<br>Atlanta, GA 30316</p>
+                    <p class="res-map-link">📍 Get directions →</p>
                 </div>
                 <div class="res-info-block">
                     <h4>Call ahead</h4>
                     <p>For large groups (7+) or same-day bookings, please call us.</p>
-                    <p class="res-phone">0123456789</p>
+                    <p class="res-phone">404.228.3090</p>
                 </div>
                 <div class="res-info-block">
                     <h4>Good to know</h4>
@@ -132,14 +240,151 @@
     </section>
 
     <div id="footer-placeholder"></div>
-
     <script src="components.js"></script>
     <script>
-        function submitRes() { document.getElementById('resForm').style.display = 'none'; document.getElementById('resSuccess').style.display = 'block'; }
-        function resetRes() { document.getElementById('resForm').style.display = 'block'; document.getElementById('resSuccess').style.display = 'none'; }
+        const API = 'http://localhost:3000/api';
+        let selectedTime = null;
+
+        // Set min date to today
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('resDate').min = new Date().toISOString().split('T')[0];
         });
+
+        // Load available slots when a date is picked
+        async function loadSlots() {
+            const date = document.getElementById('resDate').value;
+            if (!date) return;
+
+            selectedTime = null;
+            document.getElementById('selectedTime').value = '';
+
+            const container = document.getElementById('slotContainer');
+            container.innerHTML = '<p class="slots-loading">Checking availability…</p>';
+
+            try {
+                const res = await fetch(`${API}/availability?date=${date}`);
+                const data = await res.json();
+
+                if (!data.availability || data.availability.length === 0) {
+                    container.innerHTML = '<p class="slots-loading">No slots available for this date.</p>';
+                    return;
+                }
+
+                // Build the slot grid
+                const grid = document.createElement('div');
+                grid.className = 'slot-grid';
+
+                data.availability.forEach(slot => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'slot-btn';
+                    btn.disabled = !slot.available;
+                    btn.innerHTML = `${slot.time}<span class="slot-status">${slot.available ? `${slot.remaining} left` : 'fully booked'}</span>`;
+
+                    if (slot.available) {
+                        btn.onclick = () => selectSlot(slot.time, btn);
+                    }
+                    grid.appendChild(btn);
+                });
+
+                container.innerHTML = '';
+                container.appendChild(grid);
+
+            } catch (err) {
+                container.innerHTML = '<p class="slots-loading" style="color:#c0392b">Could not load slots. Is the server running?</p>';
+            }
+        }
+
+        // Highlight selected slot
+        function selectSlot(time, btn) {
+            document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedTime = time;
+            document.getElementById('selectedTime').value = time;
+            showError(''); // clear any error
+        }
+
+        // Show or hide error message
+        function showError(msg) {
+            const el = document.getElementById('formError');
+            el.textContent = msg;
+            el.classList.toggle('show', !!msg);
+        }
+
+        // Submit the reservation
+        async function submitRes() {
+            showError('');
+
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('emailAddr').value.trim();
+            const phone = document.getElementById('phoneNum').value.trim();
+            const date = document.getElementById('resDate').value;
+            const time = selectedTime;
+            const guests = document.getElementById('guestCount').value;
+            const occasion = document.getElementById('occasion').value;
+            const requests = document.getElementById('requests').value.trim();
+
+            // Client-side validation
+            if (!firstName || !lastName) return showError('Please enter your full name.');
+            if (!email) return showError('Please enter your email address.');
+            if (!phone) return showError('Please enter your phone number.');
+            if (!date) return showError('Please pick a date.');
+            if (!time) return showError('Please select a time slot.');
+
+            // Show loading state
+            const btn = document.getElementById('submitBtn');
+            const note = document.getElementById('submittingNote');
+            btn.disabled = true;
+            btn.textContent = 'Booking…';
+            note.style.display = 'block';
+
+            try {
+                const res = await fetch(`${API}/reservations`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ first_name: firstName, last_name: lastName, email, phone, date, time, guests, occasion, requests }),
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    // Server said no — slot taken, validation error etc.
+                    showError(data.error || 'Something went wrong. Please try again.');
+                    btn.disabled = false;
+                    btn.textContent = 'Request reservation';
+                    note.style.display = 'none';
+                    // Reload slots so the taken slot shows as fully booked
+                    loadSlots();
+                    return;
+                }
+
+                // Success
+                document.getElementById('resForm').style.display = 'none';
+                document.getElementById('successMsg').textContent =
+                    `${data.message} A confirmation has been sent to ${email}.`;
+                document.getElementById('resSuccess').style.display = 'block';
+
+            } catch (err) {
+                showError('Could not reach the server. Make sure it is running.');
+                btn.disabled = false;
+                btn.textContent = 'Request reservation';
+                note.style.display = 'none';
+            }
+        }
+
+        // Reset form back to blank state
+        function resetRes() {
+            document.getElementById('resForm').style.display = 'block';
+            document.getElementById('resSuccess').style.display = 'none';
+            document.getElementById('resForm').reset();
+            document.getElementById('slotContainer').innerHTML = '<p class="slots-loading">Pick a date above to see available times.</p>';
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').textContent = 'Request reservation';
+            document.getElementById('submittingNote').style.display = 'none';
+            selectedTime = null;
+            showError('');
+        }
     </script>
 </body>
 
