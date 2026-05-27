@@ -1,0 +1,31 @@
+<nav id="nav">
+    <div class="nav-left">
+        <a href="promotions.html">promotions</a>
+        <a href="menu.html">menu</a>
+    </div>
+    <div class="nav-logo">
+        <a href="index.html">
+            <span class="logo-main">Cozy Coffee</span>
+          <!-- <span class="logo-sub">warm · homemade · cozy</span> -->
+        </a>
+    </div>
+    <div class="nav-right">
+        <a href="reservation.html">reserve</a>
+        <a href="about.html">about us</a>
+        <button class="nav-order-btn" id="navOrderBtn" style="display:none" onclick="toggleDrawer()">
+            order <span id="oCount" class="nav-badge" style="display:none">0</span>
+        </button>
+    </div>
+    <button class="nav-burger" id="burger" onclick="toggleNav()" aria-label="Menu">
+        <span></span><span></span><span></span>
+    </button>
+</nav>
+
+<div class="nav-mobile" id="mobileNav">
+    <a href="promotions.html" onclick="toggleNav()">Promotions</a>
+    <a href="menu.html" onclick="toggleNav()">Menu</a>
+    <a href="reservation.html" onclick="toggleNav()">Reserve</a>
+    <a href="about.html" onclick="toggleNav()">About Us</a>
+    <button class="mob-order-btn" id="mobOrderBtn" style="display:none" onclick="toggleNav();toggleDrawer()">Order
+        Now</button>
+</div>

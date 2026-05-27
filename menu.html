@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu — Cozy Coffee</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="nav-placeholder"></div>
+
+    <div class="page-header">
+        <p class="page-eyebrow">traditional malay cuisine</p>
+        <h1>The Menu</h1>
+        <p class="page-sub">Traditional heritage dishes — cooked with authentic spices and made from scratch every
+            single day.</p>
+    </div>
+
+    <section class="menu-section page-menu">
+        <div class="tabs">
+            <button class="tab active" onclick="filter('all',this)">semua</button>
+            <button class="tab" onclick="filter('nasi',this)">nasi</button>
+            <button class="tab" onclick="filter('mee',this)">mee & kuey teow</button>
+            <button class="tab" onclick="filter('lauk',this)">lauk pauk</button>
+            <button class="tab" onclick="filter('kuih',this)">kuih & dessert</button>
+            <button class="tab" onclick="filter('minuman',this)">minuman</button>
+        </div>
+        <div class="menu-list" id="menuList"></div>
+        <div class="allergen-note">All dishes contain traditional ingredients including coconut milk, shrimp paste and
+            chilli. Please inform us of any allergies or dietary requirements.</div>
+    </section>
+
+    <div id="footer-placeholder"></div>
+
+    <div class="dim" id="dim" onclick="toggleDrawer()"></div>
+    <div class="drawer" id="drawer">
+        <div class="drawer-hd">
+            <div>
+                <div class="drawer-title">your order</div>
+                <div class="drawer-sub">pesanan anda</div>
+            </div>
+            <button class="xbtn" onclick="toggleDrawer()">✕</button>
+        </div>
+        <div class="drawer-bd" id="drawerBd">
+            <div class="empty">
+                <p>nothing here yet —<br>add something from the menu.</p>
+            </div>
+        </div>
+        <div class="drawer-ft">
+            <div class="frow"><span>subtotal</span><span id="sub">RM 0.00</span></div>
+            <div class="frow"><span>delivery</span><span>RM 3.00</span></div>
+            <div class="ftotal"><span>total</span><strong id="tot">RM 0.00</strong></div>
+            <button class="place-btn" onclick="placeOrder()">place order</button>
+            <p class="fnote">we start cooking straight away</p>
+        </div>
+    </div>
+
+    <div class="modal-bg" id="modalBg">
+        <div class="modal">
+            <div class="modal-top">
+                <p class="modal-tag">terima kasih</p>
+                <h2>order received</h2>
+            </div>
+            <div class="modal-body">
+                <p>We're getting our aprons on right now. Give us about 35–40 minutes and it'll be with you.</p>
+                <div class="onum" id="oNum">CC-000000</div>
+                <button class="mback" onclick="closeModal()">back to menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="components.js"></script>
+    <script>
+        const dishes = [
+            /* ── NASI ── */
+            { id: 1, name: "Nasi Kerabu", desc: "Blue-tinted rice coloured with butterfly pea flower, served with grilled fish, toasted coconut, budu fish sauce, fresh herbs and crispy crackers.", price: 14, cat: "nasi", tag: "wajib cuba" },
+            { id: 2, name: "Nasi Dagang", desc: "Steamed glutinous rice cooked in coconut milk, served with ikan tongkol in rich lemak gravy, pickled vegetables and a boiled egg. A Terengganu breakfast staple.", price: 12, cat: "nasi", tag: "warisan" },
+            { id: 3, name: "Nasi Ulam", desc: "Rice mixed with an abundance of fresh herbs — daun kesum, pegaga, winged beans, lemongrass and more. Light, fragrant and genuinely good for you.", price: 11, cat: "nasi", tag: "vegetarian" },
+            { id: 4, name: "Nasi Lemak Kampung", desc: "Fragrant coconut rice with sambal ikan bilis, soft boiled egg, sliced cucumber, fried peanuts and crispy fried fish. Grandma's recipe, untouched.", price: 10, cat: "nasi", tag: "klasik" },
+            { id: 5, name: "Nasi Minyak & Gulai", desc: "Fragrant ghee rice served alongside slow-cooked spiced meat gulai, pineapple acar and dalca lentil curry. A wedding-feast dish on our table every day.", price: 16, cat: "nasi", tag: "" },
+            { id: 6, name: "Nasi Tomato", desc: "Rice cooked with ripe tomatoes and whole spices, served with ayam masak merah, pickled vegetables and crisp papadom.", price: 14, cat: "nasi", tag: "" },
+
+            /* ── MEE & KUEY TEOW ── */
+            { id: 7, name: "Mee Jawa", desc: "Yellow noodles in a thick, sweet-spicy gravy made from sweet potato and dried shrimp, topped with boiled egg, fried tofu and crispy shallots.", price: 13, cat: "mee", tag: "wajib cuba" },
+            { id: 8, name: "Mee Rebus", desc: "Yellow noodles bathed in a thick, savoury-sweet gravy, garnished with spring onion, fried shallots and bird's eye chilli. Gravy made fresh every morning.", price: 12, cat: "mee", tag: "" },
+            { id: 9, name: "Mee Kari", desc: "Yellow noodles in a rich, creamy curry broth with chicken, tofu, bean sprouts and a wedge of calamansi lime to squeeze over.", price: 13, cat: "mee", tag: "pedas" },
+            { id: 10, name: "Kuey Teow Kerang", desc: "Flat rice noodles stir-fried with fresh cockles, dark soy sauce, bean sprouts and egg over very high heat. Proper wok hei, no shortcuts.", price: 14, cat: "mee", tag: "" },
+            { id: 11, name: "Laksa Penang", desc: "White noodles in a bold, sour fish-based broth with sliced pineapple, cucumber, red onion, torch ginger flower and Vietnamese mint.", price: 13, cat: "mee", tag: "warisan" },
+            { id: 12, name: "Mee Siam", desc: "Rice vermicelli in a tangy, slightly sweet coconut and tamarind broth, served with prawns, tofu and a boiled egg.", price: 12, cat: "mee", tag: "" },
+
+            /* ── LAUK PAUK ── */
+            { id: 13, name: "Rendang Tok", desc: "Beef rendang slow-cooked for hours until dry and deeply caramelised. Spices ground by hand in-house. One piece goes a long way.", price: 18, cat: "lauk", tag: "wajib cuba" },
+            { id: 14, name: "Gulai Ikan Patin", desc: "River catfish cooked in a fiery yellow lemak curry with house-fermented tempoyak (durian paste). Bold, funky and deeply traditional.", price: 16, cat: "lauk", tag: "pedas" },
+            { id: 15, name: "Ayam Percik", desc: "Chicken marinated in a blend of spices, charcoal-grilled and basted with fragrant coconut percik sauce. Served with glutinous rice.", price: 15, cat: "lauk", tag: "" },
+            { id: 16, name: "Masak Lemak Cili Padi", desc: "Meat or chicken simmered in a rich, turmeric-yellow coconut gravy loaded with bird's eye chillies. Each spoonful burns, but you won't be able to stop.", price: 15, cat: "lauk", tag: "pedas" },
+            { id: 17, name: "Sambal Belacan Udang", desc: "Fresh prawns tossed in a fragrant roasted belacan sambal with sliced onions and red chilli. Best eaten with a bowl of plain hot rice.", price: 16, cat: "lauk", tag: "" },
+            { id: 18, name: "Pais Ikan", desc: "Spanish mackerel or selar wrapped in grated coconut sambal and banana leaf, then grilled until fragrant. A true kampung flavour hard to find anywhere else.", price: 14, cat: "lauk", tag: "warisan" },
+
+            /* ── KUIH & DESSERT ── */
+            { id: 19, name: "Cendol", desc: "Fresh pandan jelly strips in full-fat coconut milk with liquid gula melaka and shaved ice. Both a drink and a dessert at the same time.", price: 7, cat: "kuih", tag: "klasik" },
+            { id: 20, name: "Pulut Kuning & Rendang", desc: "Glutinous rice steamed in coconut milk and turmeric, served alongside chicken rendang and sambal. A celebration dish we serve every single day.", price: 9, cat: "kuih", tag: "" },
+            { id: 21, name: "Kuih Ketayap", desc: "Thin pandan crepe rolled around a filling of grated coconut and palm sugar. Made by hand every morning — limited daily.", price: 5, cat: "kuih", tag: "terhad" },
+            { id: 22, name: "Kuih Lapis", desc: "Soft, colourful layered cake made from rice flour and coconut milk. Sweet, chewy and beautiful — each layer requires real patience to set.", price: 5, cat: "kuih", tag: "" },
+            { id: 23, name: "Pengat Pisang", desc: "Raja bananas simmered in sweet coconut milk with gula melaka and pandan leaf. Served warm or at room temperature, just like at grandma's.", price: 7, cat: "kuih", tag: "" },
+            { id: 24, name: "Bubur Kacang", desc: "Mung beans slowly cooked in sweetened coconut milk with ginger and pandan. Simple, honest comfort food at its most traditional.", price: 6, cat: "kuih", tag: "" },
+
+            /* ── MINUMAN ── */
+            { id: 25, name: "Teh Tarik", desc: "Strong black tea blended with condensed milk and pulled repeatedly between two vessels until frothy. A true Malaysian art form.", price: 4, cat: "minuman", tag: "klasik" },
+            { id: 26, name: "Bandung", desc: "Rose syrup mixed with evaporated milk over ice. Sweet, light and a beautiful shade of pink. A crowd favourite for decades.", price: 4, cat: "minuman", tag: "" },
+            { id: 27, name: "Sirap Limau", desc: "Red rose syrup with fresh calamansi lime and crushed ice. Refreshing, sweet-sour and the most missed roadside drink.", price: 4, cat: "minuman", tag: "" },
+            { id: 28, name: "Kopi O Ais", desc: "Strong black coffee brewed the old-school way through a cloth filter sock, poured straight over ice. Bitter and bold.", price: 4, cat: "minuman", tag: "" },
+            { id: 29, name: "Air Barli", desc: "Homemade barley water, lightly sweetened and served cold. Good for the body, great for the soul.", price: 4, cat: "minuman", tag: "buatan sendiri" },
+            { id: 30, name: "Cincau Hijau", desc: "Fresh green grass jelly drink with a touch of sugar and ice. Jelly pressed from fresh leaves every day, not from a packet.", price: 4, cat: "minuman", tag: "buatan sendiri" },
+        ];
+
+        const catMeta = [
+            { key: 'nasi', label: 'Nasi', note: 'traditional rice dishes' },
+            { key: 'mee', label: 'Mee & Kuey Teow', note: 'noodle dishes' },
+            { key: 'lauk', label: 'Lauk Pauk', note: 'mains & sides' },
+            { key: 'kuih', label: 'Kuih & Dessert', note: 'handmade sweets' },
+            { key: 'minuman', label: 'Minuman', note: 'traditional drinks' },
+        ];
+
+        const tagMap = {
+            'wajib cuba': 'must try',
+            'warisan': 'heritage',
+            'klasik': 'classic',
+            'pedas': 'spicy 🌶',
+            'terhad': 'limited',
+            'vegetarian': 'vegetarian',
+            'buatan sendiri': 'homemade',
+        };
+
+        let cart = {};
+
+        function dishHTML(d) {
+            const tl = tagMap[d.tag] || d.tag;
+            const isHot = d.tag === 'wajib cuba';
+            return `<div class="dish" onclick="addItem(${d.id})">
+    <div class="dish-top">
+      <span class="dish-name">${d.name}</span>
+      <span class="dish-price">RM ${d.price.toFixed(2)}</span>
+    </div>
+    <p class="dish-desc">${d.desc}</p>
+    <div class="dish-foot">
+      ${d.tag ? `<span class="dish-tag${isHot ? ' tag-hoy' : ''}">${tl}</span>` : '<span></span>'}
+      <button class="add-btn" onclick="event.stopPropagation();addItem(${d.id})">+ add</button>
+    </div>
+  </div>`;
+        }
+
+        function renderMenu(f) {
+            const list = document.getElementById('menuList');
+            let h = '';
+            if (f === 'all') {
+                catMeta.forEach(c => {
+                    h += `<div class="cat-head">${c.label} <span class="cat-note">— ${c.note}</span></div>`;
+                    h += dishes.filter(d => d.cat === c.key).map(dishHTML).join('');
+                });
+            } else {
+                h = dishes.filter(d => d.cat === f).map(dishHTML).join('');
+            }
+            list.innerHTML = h;
+        }
+
+        function filter(cat, btn) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            renderMenu(cat);
+        }
+
+        function addItem(id) { cart[id] = (cart[id] || 0) + 1; updateCart(); }
+
+        function changeQty(id, d) { cart[id] = (cart[id] || 0) + d; if (cart[id] <= 0) delete cart[id]; updateCart(); }
+
+        function updateCart() {
+            const DELIVERY = 3;
+            const count = Object.values(cart).reduce((a, b) => a + b, 0);
+            const sub = Object.entries(cart).reduce((s, [id, q]) => s + dishes.find(d => d.id === +id).price * q, 0);
+            const tot = sub > 0 ? sub + DELIVERY : 0;
+            const badge = document.getElementById('oCount');
+            if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'inline-flex' : 'none'; }
+            document.getElementById('sub').textContent = 'RM ' + sub.toFixed(2);
+            document.getElementById('tot').textContent = 'RM ' + tot.toFixed(2);
+            const bd = document.getElementById('drawerBd');
+            if (!count) {
+                bd.innerHTML = '<div class="empty"><p>belum ada pesanan —<br>pilih hidangan dari menu.</p></div>';
+                return;
+            }
+            bd.innerHTML = Object.entries(cart).map(([id, qty]) => {
+                const d = dishes.find(i => i.id === +id);
+                return `<div class="ci">
+      <div class="ci-info">
+        <div class="cn">${d.name}</div>
+        <div class="cp">RM ${d.price.toFixed(2)} each</div>
+        <div class="cq">
+          <button class="qb" onclick="changeQty(${id},-1)">−</button>
+          <span class="qn">${qty}</span>
+          <button class="qb" onclick="changeQty(${id},1)">+</button>
+        </div>
+      </div>
+      <div class="ct">RM ${(d.price * qty).toFixed(2)}</div>
+    </div>`;
+            }).join('');
+        }
+
+        function placeOrder() {
+            if (!Object.keys(cart).length) return;
+            document.getElementById('oNum').textContent = 'CC-' + Math.floor(100000 + Math.random() * 900000);
+            document.getElementById('modalBg').classList.add('on');
+            toggleDrawer();
+        }
+
+        function closeModal() {
+            document.getElementById('modalBg').classList.remove('on');
+            cart = {};
+            updateCart();
+        }
+
+        renderMenu('all');
+    </script>
+</body>
+
+</html>
